@@ -279,4 +279,4 @@ class MainWindow(QMainWindow):
 **Version**: 1.0  
 **Created**: 2026-01-25  
 **Based on**: HPM v0.1.7o+ implementation  
-**Author**: Jim Murdock
+**Author**: Jim U'Ren
