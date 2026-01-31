@@ -1,214 +1,375 @@
-# GitHub Version Checker Module
+# Version Checker Module
 
-A standalone module for checking GitHub repository releases and comparing versions.
-Designed to be reusable across different PyQt5/PyQt6/PySide applications.
+A comprehensive, reusable version checking and updating system for Python applications using GitHub releases.
+
+## Overview
+
+This module provides a complete solution for checking, downloading, and installing application updates from GitHub repositories. It supports both git-based installations and standalone release archives (ZIP/tarball).
 
 ## Features
 
-- **Async version checking** with callbacks for non-blocking UI operations
-- **Semantic version comparison** with prerelease support (alpha, beta, rc)
-- **Robust error handling** for network and API issues
-- **Configurable repositories** - works with any GitHub repository
-- **Minimal dependencies** - uses only Python's built-in `urllib` library
-- **Flexible URL formats** - accepts various GitHub URL formats
+- **GitHub Version Checking**: Check for latest releases via GitHub API
+- **Semantic Version Comparison**: Intelligent version comparison (e.g., 0.3.0 vs 0.3.1)
+- **Dual Update Strategies**:
+  - Git-based updates using `git reset --hard`
+  - Direct download updates from release archives
+- **Cross-platform Support**: Works on Windows, macOS, and Linux
+- **Safety Features**:
+  - Automatic backup before updates
+  - Rollback capability on failure
+  - 30-second timeout protection
+  - Comprehensive error handling
+- **No External Dependencies**: Uses only Python standard library (urllib, subprocess, etc.)
+
+## Components
+
+### Core Modules
+
+#### 1. `github_version_checker.py`
+Standalone module for checking GitHub repository releases and comparing versions.
+
+**Key Features**:
+- Asynchronous version checking with callbacks
+- Semantic version comparison
+- Robust error handling
+- Minimal dependencies (urllib only)
+
+**Usage**:
+```python
+from github_version_checker import GitHubVersionChecker
+
+checker = GitHubVersionChecker(
+    repo_url="owner/repo",
+    current_version="0.3.0",
+    timeout=10
+)
+
+# Synchronous check
+result = checker.get_latest_version()
+if result.has_update:
+    print(f"Update available: {result.latest_version}")
+
+# Asynchronous check
+def callback(result):
+    if result.has_update:
+        print(f"Update available: {result.latest_version}")
+
+checker.check_for_updates(callback)
+```
+
+#### 2. `git_updater.py`
+Handles safe git repository updates using force update strategy.
+
+**Key Features**:
+- Force update using `git reset --hard` to avoid conflicts
+- 30-second timeout on git operations
+- Comprehensive error handling
+- Version comparison and validation
+- Safe repository detection
+
+**Usage**:
+```python
+from git_updater import GitUpdater
+
+updater = GitUpdater(
+    repo_url="https://github.com/owner/repo.git",
+    version_file_path="version.py",
+    branch="main",
+    timeout=30
+)
+
+# Check for updates
+has_update, current, latest = updater.get_update_info()
+
+# Perform update
+if has_update:
+    result = updater.force_update()
+    if result.success:
+        print(f"Updated from {result.current_version} to {result.new_version}")
+```
+
+#### 3. `release_downloader.py`
+Downloads and installs release archives from GitHub for non-git installations.
+
+**Key Features**:
+- Downloads release archives (ZIP/tarball) from GitHub
+- Creates backups before update
+- Validates archive integrity
+- Provides rollback on failure
+- Cross-platform support (Windows/Linux)
+- 30-second timeout on operations
+
+**Usage**:
+```python
+from release_downloader import ReleaseDownloader
+
+downloader = ReleaseDownloader(
+    repo_url="owner/repo",
+    version_file_path="version.py",
+    timeout=30
+)
+
+# Perform complete update
+result = downloader.perform_update("0.3.1")
+if result.success:
+    print(f"Updated to {result.new_version}")
+    print(f"Backup at: {result.backup_path}")
+```
+
+#### 4. `version.py`
+Centralized version management template.
+
+**Usage**:
+```python
+from version import __version__, get_version_string
+
+print(__version__)  # "0.0.9"
+print(get_version_string())  # "v0.0.9 2026-01-30 1840 CST"
+```
+
+### Test Scripts
+
+#### `test_release_downloader.py`
+Tests release downloader functionality without performing actual updates.
+
+**Usage**:
+```bash
+python test_release_downloader.py
+```
+
+#### `test_update_dialog.py`
+PyQt6-based GUI test for update dialogs (requires PyQt6 and application context).
+
+**Usage**:
+```bash
+python test_update_dialog.py
+```
 
 ## Installation
 
-Simply copy `github_version_checker.py` into your project directory.
-
+### As a Git Submodule
 ```bash
-# Or clone the repository
-git clone https://github.com/juren53/version-checker-module.git
+cd your-project
+git submodule add https://github.com/yourusername/version-checker-module.git
+```
+
+### Direct Copy
+Simply copy the required files into your project:
+- `github_version_checker.py`
+- `git_updater.py`
+- `release_downloader.py`
+- `version.py`
+
+## Integration Example
+
+```python
+import os
+from github_version_checker import GitHubVersionChecker
+from git_updater import GitUpdater
+from release_downloader import ReleaseDownloader
+
+def check_for_updates():
+    # Step 1: Check for updates via GitHub API
+    checker = GitHubVersionChecker(
+        repo_url="owner/repo",
+        current_version="0.3.0"
+    )
+    
+    result = checker.get_latest_version()
+    
+    if not result.has_update:
+        print("Already up to date!")
+        return
+    
+    print(f"Update available: {result.latest_version}")
+    
+    # Step 2: Determine installation type and update
+    if os.path.exists(".git"):
+        # Git-based installation
+        updater = GitUpdater(
+            repo_url="https://github.com/owner/repo.git",
+            version_file_path="version.py"
+        )
+        update_result = updater.force_update()
+    else:
+        # Non-git installation
+        downloader = ReleaseDownloader(
+            repo_url="owner/repo",
+            version_file_path="version.py"
+        )
+        update_result = downloader.perform_update(result.latest_version)
+    
+    # Step 3: Handle result
+    if update_result.success:
+        print(f"✓ Updated to {update_result.new_version}")
+    else:
+        print(f"✗ Update failed: {update_result.message}")
+```
+
+## Platform Considerations
+
+### Windows
+- Uses `.zip` format for release downloads
+- Requires PowerShell for some operations
+- Git must be in PATH for git-based updates
+
+### Linux/macOS
+- Uses `.tar.gz` format for release downloads
+- Preserves file permissions during updates
+- Git must be installed for git-based updates
+
+## Safety Mechanisms
+
+### Backup System
+- Creates timestamped backups before updates
+- Keeps last 3 backups automatically
+- Automatic rollback on failure
+- Backups stored in `.backups/` directory
+
+### Error Handling
+- Network timeout protection (30 seconds)
+- Git operation timeout protection (30 seconds)
+- Comprehensive error messages
+- Graceful degradation for edge cases
+
+### Validation
+- Version format validation
+- Archive integrity checks
+- Repository detection
+- File existence verification
+
+## API Reference
+
+### GitHubVersionChecker
+
+**Methods**:
+- `get_latest_version()` → `VersionCheckResult`: Synchronous version check
+- `check_for_updates(callback)`: Asynchronous version check with callback
+- `compare_versions(v1, v2)` → `int`: Compare two semantic versions
+
+**Result Object**:
+```python
+class VersionCheckResult:
+    has_update: bool
+    current_version: str
+    latest_version: str
+    download_url: str
+    release_notes: str
+    published_date: str
+    error_message: str
+    is_newer: bool
+```
+
+### GitUpdater
+
+**Methods**:
+- `is_git_repository()` → `bool`: Check if in a git repository
+- `get_current_version()` → `Optional[str]`: Read local version
+- `get_remote_version()` → `Optional[str]`: Read remote version
+- `get_update_info()` → `Tuple[bool, str, str]`: Check for updates
+- `force_update()` → `GitUpdateResult`: Perform git-based update
+- `get_repository_status()` → `Tuple[bool, str]`: Get repo status
+
+**Result Object**:
+```python
+class GitUpdateResult:
+    success: bool
+    message: str
+    current_version: str
+    new_version: str
+    command_output: str
+    error_output: str
+```
+
+### ReleaseDownloader
+
+**Methods**:
+- `download_release(version)` → `Tuple[bool, str, str]`: Download release
+- `extract_archive(archive_path)` → `Tuple[bool, str, str]`: Extract archive
+- `backup_installation()` → `Tuple[bool, str, str]`: Create backup
+- `apply_update(extracted_dir)` → `Tuple[bool, str]`: Apply update
+- `rollback()` → `Tuple[bool, str]`: Restore from backup
+- `perform_update(version)` → `ReleaseDownloadResult`: Complete update process
+- `cleanup()`: Remove temporary files
+
+**Result Object**:
+```python
+class ReleaseDownloadResult:
+    success: bool
+    message: str
+    current_version: str
+    new_version: str
+    download_url: str
+    error_message: str
+    backup_path: str
 ```
 
 ## Requirements
 
 - Python 3.6+
-- No external dependencies (uses built-in `urllib` and `json`)
-
-## Usage
-
-### Basic Synchronous Check
-
-```python
-from github_version_checker import GitHubVersionChecker
-
-# Initialize checker
-checker = GitHubVersionChecker(
-    repo_url="juren53/system-monitor",  # or full URL: https://github.com/juren53/system-monitor
-    current_version="0.2.18",
-    timeout=10
-)
-
-# Perform synchronous check
-result = checker.get_latest_version()
-
-if result.error_message:
-    print(f"Error: {result.error_message}")
-else:
-    print(f"Current version: {result.current_version}")
-    print(f"Latest version: {result.latest_version}")
-    print(f"Has update: {result.has_update}")
-    print(f"Download URL: {result.download_url}")
-```
-
-### Asynchronous Check with Callback
-
-```python
-from github_version_checker import GitHubVersionChecker
-
-def handle_version_check(result):
-    if result.error_message:
-        print(f"Check failed: {result.error_message}")
-    elif result.has_update:
-        print(f"New version available: {result.latest_version}")
-        print(f"Download: {result.download_url}")
-    else:
-        print("You're up to date!")
-
-# Initialize and start async check
-checker = GitHubVersionChecker("owner/repo", "1.0.0")
-checker.check_for_updates(handle_version_check)
-```
-
-### Version Comparison
-
-```python
-from github_version_checker import GitHubVersionChecker
-
-checker = GitHubVersionChecker("owner/repo", "1.0.0")
-
-# Returns: -1 (less than), 0 (equal), or 1 (greater than)
-result = checker.compare_versions("0.2.18", "0.2.19")  # Returns -1
-result = checker.compare_versions("1.0.0", "1.0.0")    # Returns 0
-result = checker.compare_versions("1.1.0", "1.0.0")    # Returns 1
-
-# Handles prerelease versions
-result = checker.compare_versions("1.0.0a", "1.0.0")   # Returns -1 (alpha < release)
-result = checker.compare_versions("1.0.0b", "1.0.0a")  # Returns 1 (beta > alpha)
-```
-
-## API Reference
-
-### `GitHubVersionChecker`
-
-#### Constructor
-```python
-GitHubVersionChecker(repo_url: str, current_version: str, timeout: int = 10)
-```
-
-**Parameters:**
-- `repo_url`: GitHub repository URL (formats: `owner/repo` or `https://github.com/owner/repo`)
-- `current_version`: Current application version (e.g., `"0.2.18d"`)
-- `timeout`: Network request timeout in seconds (default: 10)
-
-#### Methods
-
-##### `get_latest_version() -> VersionCheckResult`
-Performs a synchronous (blocking) version check.
-
-**Returns:** `VersionCheckResult` object containing:
-- `has_update` (bool): True if a newer version is available
-- `current_version` (str): The current version string
-- `latest_version` (str): The latest version from GitHub
-- `download_url` (str): URL to the release page
-- `release_notes` (str): Release notes/body from GitHub
-- `published_date` (str): Publication date of the release
-- `error_message` (str): Error message if check failed
-- `is_newer` (bool): True if latest > current
-
-##### `check_for_updates(callback: Callable[[VersionCheckResult], None]) -> None`
-Performs an asynchronous (non-blocking) version check in a background thread.
-
-**Parameters:**
-- `callback`: Function that receives a `VersionCheckResult` when complete
-
-##### `compare_versions(version1: str, version2: str) -> int`
-Compares two semantic version strings.
-
-**Returns:**
-- `-1` if version1 < version2
-- `0` if version1 == version2
-- `1` if version1 > version2
-
-**Supports:**
-- Standard semantic versioning (major.minor.patch)
-- Prerelease suffixes (a=alpha, b=beta, rc=release candidate)
-- Version strings with 'v' prefix (e.g., "v1.0.0")
-
-## Version Comparison Rules
-
-The module understands semantic versioning with prerelease support:
-
-1. **Numeric comparison**: `0.2.18` < `0.2.19`
-2. **Prerelease < Release**: `1.0.0a` < `1.0.0`
-3. **Prerelease ranking**: alpha < beta < rc < release
-
-Examples:
-- `0.2.18d` = `0.2.18d` ✓
-- `0.2.18` < `0.2.19` ✓
-- `0.2.18a` < `0.2.18` ✓ (alpha is prerelease)
-- `0.2.18b` > `0.2.18a` ✓ (beta > alpha)
-
-## Error Handling
-
-The module handles various error conditions gracefully:
-
-- Network timeouts and connectivity issues
-- Invalid JSON responses
-- GitHub API rate limiting
-- Invalid repository URLs
-- Missing releases
-
-All errors are captured in the `VersionCheckResult.error_message` field.
+- Git (for git-based updates)
+- Internet connection (for version checking and downloads)
 
 ## Testing
 
-Run the included test suite:
+Run the test scripts to verify functionality:
 
 ```bash
-python github_version_checker.py
+# Test release downloader
+python test_release_downloader.py
+
+# Test update dialogs (requires PyQt6)
+python test_update_dialog.py
 ```
 
-This will test:
-- Synchronous version checking
-- Version comparison logic
-- Asynchronous callback functionality
+## Documentation
 
-## Integration Example
+See the planning documents for detailed implementation guidance:
+- `PLAN_version-checker-implementation.md`: Original implementation plan
+- `PLAN_Non-Git-Update-Support.md`: Non-git update implementation details
 
-```python
-# In your PyQt application
-from PyQt5.QtCore import QTimer
-from github_version_checker import GitHubVersionChecker
+## Project History
 
-class MyApplication:
-    def __init__(self):
-        self.version_checker = GitHubVersionChecker(
-            "myusername/myapp",
-            "1.0.0"
-        )
+This module was developed for the MDviewer project and extracted for reusability. It combines lessons learned from multiple projects:
 
-        # Check for updates on startup
-        self.version_checker.check_for_updates(self.on_version_checked)
+- **HPM (HST-Metadata Photos)**: Original implementation
+- **MDviewer**: PyQt6 adaptation and enhancement
+- **SysMon**: Additional testing and refinement
 
-    def on_version_checked(self, result):
-        if result.has_update:
-            # Show update notification in UI
-            self.show_update_notification(
-                f"Version {result.latest_version} available!",
-                result.download_url
-            )
-```
+## Version History
+
+- **v1.0.0** (2026-01-31): Initial modular release
+  - Extracted from MDviewer project
+  - Standalone module design
+  - Complete test coverage
+  - Cross-platform support
 
 ## License
 
-MIT License - See repository for details
+This module is released for reuse across projects. Adapt as needed for your specific use case.
 
 ## Author
 
-SysMon Project
+Jim Murdock
 
-## Version
+## Contributing
 
-v0.0.1 - Initial release (2026-01-01)
+This is a personal utility module. Feel free to adapt for your own projects.
+
+## Notes
+
+- The module is designed to be self-contained with no external dependencies beyond Python standard library
+- All network operations have timeout protection (30 seconds default)
+- The module follows a consistent result object pattern for all operations
+- Error handling is comprehensive with detailed error messages
+- Thread-safe when used with callbacks and background operations
+
+## Future Enhancements
+
+Potential additions (not currently implemented):
+- Auto-check on startup
+- Update scheduling
+- Beta channel support
+- Update history tracking
+- Configurable timeout values
+- Progress callbacks for downloads
