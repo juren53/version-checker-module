@@ -348,10 +348,6 @@ This module was developed for the MDviewer project and extracted for reusability
 
 This module is released for reuse across projects. Adapt as needed for your specific use case.
 
-## Author
-
-Jim Murdock
-
 ## Contributing
 
 This is a personal utility module. Feel free to adapt for your own projects.
