@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.0.1] - 2026-02-04 2157 CST
+
+### Fixed
+- **Release Downloader**: `working_dir` used `os.getcwd()` which could resolve to the user's home directory instead of the installation directory, causing the backup to copy the entire home directory. Changed to `os.path.dirname(os.path.abspath(__file__))`.
+- **Release Downloader**: Backup now gracefully handles ephemeral files (e.g., Chrome singleton lock files) that disappear mid-copy, instead of aborting with a `shutil.Error`.
+
+---
+
 ## [v1.0.0] - 2026-01-30 1509 CST
 
 ### Major Release - Complete Version Checking and Update System
