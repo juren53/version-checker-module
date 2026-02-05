@@ -67,7 +67,7 @@ class ReleaseDownloader:
         self.repo_url = self._normalize_repo_url(repo_url)
         self.version_file_path = version_file_path
         self.timeout = timeout
-        self.working_dir = os.getcwd()
+        self.working_dir = os.path.dirname(os.path.abspath(__file__))
         self.temp_dir = None
         self.backup_dir = None
         self.platform = sys.platform
@@ -248,6 +248,13 @@ class ReleaseDownloader:
 
             os.makedirs(self.backup_dir, exist_ok=True)
 
+            def _copy_safe(src, dst, **kwargs):
+                """Copy file, skipping files that vanish during backup."""
+                try:
+                    shutil.copy2(src, dst, **kwargs)
+                except FileNotFoundError:
+                    pass  # File disappeared during copy (e.g., lock files)
+
             for item in os.listdir(self.working_dir):
                 if item in exclude_dirs:
                     continue
@@ -260,9 +267,10 @@ class ReleaseDownloader:
                         src,
                         dst,
                         ignore=shutil.ignore_patterns("__pycache__", "*.pyc"),
+                        copy_function=_copy_safe,
                     )
                 else:
-                    shutil.copy2(src, dst)
+                    _copy_safe(src, dst)
 
             # Clean old backups (keep last 3)
             self._cleanup_old_backups(backups_base, keep=3)
