@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=64.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "version-checker-module"
+version = "1.0.1"
+description = "GitHub version checker, git updater, and release downloader for Python applications"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.7"
+authors = [
+    {name = "SysMon Project"}
+]
+keywords = ["github", "version", "checker", "updater", "releases"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+
+[project.urls]
+Homepage = "https://github.com/juren53/version-checker-module"
+Repository = "https://github.com/juren53/version-checker-module"
+Issues = "https://github.com/juren53/version-checker-module/issues"
+
+[tool.setuptools]
+py-modules = ["github_version_checker", "git_updater", "release_downloader", "version"]
