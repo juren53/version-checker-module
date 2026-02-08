@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v1.1.0] - 2026-02-08 0856 CST
+
+### Added
+- **`pyproject.toml`** for standard Python packaging — module is now pip-installable via:
+  ```
+  pip install git+https://github.com/juren53/version-checker-module.git
+  ```
+- **`.gitignore`** to exclude build artifacts (`build/`, `*.egg-info/`)
+
+### Changed
+- All three modules (`github_version_checker`, `git_updater`, `release_downloader`) are now exposed as top-level imports when installed via pip
+- Can now be listed as a proper dependency in downstream `requirements.txt` files:
+  ```
+  version-checker-module @ git+https://github.com/juren53/version-checker-module.git
+  ```
+
+### Notes
+- No API changes — fully backward compatible with v1.0.1
+- First consumer: [SysMon](https://github.com/juren53/system-monitor) added as pip dependency
+
 ## [v1.0.1] - 2026-02-04 2157 CST
 
 ### Fixed

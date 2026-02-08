@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "version-checker-module"
-version = "1.0.1"
+version = "1.1.0"
 description = "GitHub version checker, git updater, and release downloader for Python applications"
 readme = "README.md"
 license = {text = "MIT"}

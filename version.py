@@ -4,9 +4,9 @@ Centralized version management for version-checker-module.
 Provides semantic versioning and version-related utilities.
 """
 
-__version__ = "1.0.1"
-__version_date__ = "2026-02-04 2157"
-__version_info__ = (1, 0, 1)
+__version__ = "1.1.0"
+__version_date__ = "2026-02-08 0856"
+__version_info__ = (1, 1, 0)
 
 
 def get_version_string():
